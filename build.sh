@@ -361,7 +361,6 @@ text=$(
  *Linux Version*: $LINUX_VERSION
  *Compiler*: $COMPILER_STRING
  *Build Date*: $KBUILD_BUILD_TIMESTAMP
- *KernelSU*: ${KSU}
  *SuSFS*: $(susfs_included && echo "$SUSFS_VERSION" || echo "None")
 EOF
 )
