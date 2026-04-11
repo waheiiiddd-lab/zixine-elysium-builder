@@ -235,7 +235,11 @@ elif [ "$KSU" == "vortexsu" ]; then
     log "Applying Anti-Panic patch for ida_free in namespace.c..."
     # Menonaktifkan peringatan fatal ida_free yang menyebabkan reboot saat Zygisk berjalan
     sed -i 's/WARN_ON_ONCE(1);/\/\/WARN_ON_ONCE(1);/g' lib/idr.c 2>/dev/null || true
+    
+    # Mengganti BUG_ON menjadi WARN_ON
     sed -i 's/BUG_ON/WARN_ON/g' fs/namespace.c 2>/dev/null || true
+    # Memperbaiki BUILD_BUG_ON yang ikut terganti secara tidak sengaja
+    sed -i 's/BUILD_WARN_ON/BUILD_BUG_ON/g' fs/namespace.c 2>/dev/null || true
     # ===============================================
 
     SUSFS_VERSION=$(grep -E '^#define SUSFS_VERSION' ./include/linux/susfs.h | cut -d' ' -f3 | sed 's/"//g')
