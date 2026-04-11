@@ -362,7 +362,7 @@ config --enable CONFIG_TCP_CONG_WESTWOOD
 config --enable CONFIG_DEVFREQ_GOV_PERFORMANCE
 if [ "$KVER" == "5.10" ]; then
   config --enable CONFIG_MQ_DEADLINE
-  config --enable CONFIG_ANDROID_LOW_MEMORY_KILLER
+  #config --enable CONFIG_ANDROID_LOW_MEMORY_KILLER
 fi
 
 if [ "$DEFCONFIG_TO_MERGE" ]; then
