@@ -16,7 +16,7 @@ WORKDIR="$(pwd)"
 
 ANYKERNEL_REPO="https://github.com/Kingfinik98/AnyKernel3"
 ANYKERNEL_BRANCH="master"
-GKI_RELEASES_REPO="https://github.com/Kingfinik98/build-vortex" 
+GKI_RELEASES_REPO="https://github.com/waheiiiddd-lab/build-green" 
 KERNEL_DEFCONFIG="gki_defconfig"
 DEFCONFIG_TO_MERGE=""
 
