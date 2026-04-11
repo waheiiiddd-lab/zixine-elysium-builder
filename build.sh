@@ -15,7 +15,7 @@ TIMEZONE="Asia/Jakarta"
 WORKDIR="$(pwd)"
 
 ANYKERNEL_REPO="https://github.com/waheiiiddd-lab/anykernel"
-ANYKERNEL_BRANCH="master"
+ANYKERNEL_BRANCH="main"
 GKI_RELEASES_REPO="https://github.com/waheiiiddd-lab/build-green" 
 KERNEL_DEFCONFIG="gki_defconfig"
 DEFCONFIG_TO_MERGE=""
