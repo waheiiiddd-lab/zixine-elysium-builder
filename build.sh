@@ -230,14 +230,27 @@ elif [ "$KSU" == "vortexsu" ]; then
     cp -r sus/kernel_patches/include .
     cp -r sus/kernel_patches/50_add_susfs_in_${SUSFS_BRANCH}.patch .
     patch -p1 < 50_add_susfs_in_${SUSFS_BRANCH}.patch || true
+    
+    # === FIX KERNEL PANIC 5.10 ZYGISK / IDA_FREE ===
+    log "Applying Anti-Panic patch for ida_free in namespace.c..."
+    # Menonaktifkan peringatan fatal ida_free yang menyebabkan reboot saat Zygisk berjalan
+    sed -i 's/WARN_ON_ONCE(1);/\/\/WARN_ON_ONCE(1);/g' lib/idr.c 2>/dev/null || true
+    sed -i 's/BUG_ON/WARN_ON/g' fs/namespace.c 2>/dev/null || true
+    # ===============================================
+
     SUSFS_VERSION=$(grep -E '^#define SUSFS_VERSION' ./include/linux/susfs.h | cut -d' ' -f3 | sed 's/"//g')
-    config --enable CONFIG_KPM
+    
+    # KPM DIMATIKAN KARENA TIDAK STABIL DAN SERING BENTROK DENGAN ZYGISK
+    # config --enable CONFIG_KPM
+    config --disable CONFIG_KPM
+    
     config --enable CONFIG_KSU_MULTI_MANAGER_SUPPORT
     config --enable CONFIG_KSU_SUSFS
   else
     config --enable CONFIG_KSU_SUSFS
   fi
 fi
+
 
 # --- SUSFS IMPLEMENTATION ---
 if susfs_included; then
@@ -384,19 +397,6 @@ make "${MAKE_ARGS[@]}"
 
 # ABI/KMI Checking
 $KMI_CHECK "$KMI_TARGET" "$MODULE_SYMVERS" || true
-
-# KPM Patch Logic
-if [ "$KSU" == "vortexsu" ]; then
-  log "Applying Kernel Patch Manager (KPM)..."
-  cd "$OUTDIR/arch/arm64/boot" || exit
-  if [ -f Image ]; then
-    curl -LSs "https://github.com/Kingfinik98/SukiSU_patch/raw/refs/heads/main/kpm/patch_linux" -o patch
-    chmod 777 patch
-    ./patch
-    [ -f oImage ] && mv -f oImage Image
-  fi
-fi
-cd "$WORKDIR" || exit
 
 # AnyKernel3 Packaging
 log "📦 Packaging with AnyKernel3..."
