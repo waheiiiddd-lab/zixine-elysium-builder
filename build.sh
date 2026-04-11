@@ -220,7 +220,7 @@ if ksu_included; then
 elif [ "$KSU" == "vortexsu" ]; then
   # Custom SU Setup (Upstream Logic)
   log "Setting up core SU Manager..."
-  curl -LSs "https://raw.githubusercontent.com/Kingfinik98/VortexSU/refs/heads/main/kernel/setup.sh" | bash -s main
+  curl -LSs "https://raw.githubusercontent.com/waheiiiddd-lab/VortexSU/refs/heads/main/kernel/setup.sh" | bash -s main
   
   if [ "$KVER" == "5.10" ]; then
     SUSFS_BRANCH="gki-android12-5.10"
