@@ -14,7 +14,7 @@ HOST="elysium"
 TIMEZONE="Asia/Jakarta"
 WORKDIR="$(pwd)"
 
-ANYKERNEL_REPO="https://github.com/Kingfinik98/AnyKernel3"
+ANYKERNEL_REPO="https://github.com/waheiiiddd-lab/anykernel"
 ANYKERNEL_BRANCH="master"
 GKI_RELEASES_REPO="https://github.com/waheiiiddd-lab/build-green" 
 KERNEL_DEFCONFIG="gki_defconfig"
