@@ -155,7 +155,7 @@ log "🧰 Preparing Toolchains & Variables..."
 # Determine Variant Identity
 case "$KSU" in
   "yes") VARIANT="KSU" ;;
-  "vortexsu") VARIANT="Xvortex" ;; # Internal logic remains vortexsu, output is ZixineSU
+  "vortexsu") VARIANT="VTX-base" ;; # Internal logic remains vortexsu, output is ZixineSU
   "no") VARIANT="VNL" ;;
 esac
 susfs_included && VARIANT+="+SuSFS"
