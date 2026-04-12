@@ -60,8 +60,6 @@ fi
 
 echo "⚙️ Adding Universal Performance Tuning"
 cat >> $DEFCONFIG <<EOF
-CONFIG_TMPFS_XATTR=y
-CONFIG_TMPFS_POSIX_ACL=y
 CONFIG_IP_NF_TARGET_TTL=y
 CONFIG_TCP_CONG_ADVANCED=y
 CONFIG_TCP_CONG_WESTWOOD=y
@@ -84,13 +82,6 @@ CONFIG_CPU_FREQ_GOV_SCHEDUTIL=y
 CONFIG_CPU_FREQ_GOV_ONDEMAND=y
 EOF
 
-if [ "$KVER" == "5.10" ]; then
-  echo "⚙️ Adding VorteX Native C-Script Dependencies (5.10 Only)"
-  cat >> $DEFCONFIG <<EOF
-CONFIG_ANDROID_LOW_MEMORY_KILLER=y
-CONFIG_DEVFREQ_GOV_PERFORMANCE=y
-EOF
-
   echo "⚙️ Added LTO & Compiler Optimization (KVER 5.10 Only)"
   cat >> $DEFCONFIG <<EOF
 CONFIG_LTO=y
@@ -102,6 +93,3 @@ CONFIG_HAS_LTO_CLANG=y
 # CONFIG_LTO_CLANG_FULL is not set
 CONFIG_LTO_CLANG_THIN=y
 EOF
-else
-  echo "⚙️ LTO Optimization skipped (For KVER 6.1 & 6.6)"
-fi
