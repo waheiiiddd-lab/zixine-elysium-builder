@@ -91,11 +91,11 @@ if [ "$KVER" == "5.10" ]; then
 fi
 
 # [4.2] Driver Adreno SkiaVK (GKI 5.10)
-if [ "$KVER" == "5.10" ]; then
-  log "🎮 Injecting Adreno SkiaVK library..."
-  mkdir -p "$WORKDIR/vendor/lib64"
-  curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/6.x/system/vendor/lib64/libgsl.so" -o "$WORKDIR/vendor/lib64/libgsl.so"
-fi
+#if [ "$KVER" == "5.10" ]; then
+  #log "🎮 Injecting Adreno SkiaVK library..."
+  #mkdir -p "$WORKDIR/vendor/lib64"
+  #curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/6.x/system/vendor/lib64/libgsl.so" -o "$WORKDIR/vendor/lib64/libgsl.so"
+#fi
 
  [4.3] Cpuset Optimizer (GKI 5.10)
 if [ "$KVER" == "5.10" ]; then
@@ -115,7 +115,7 @@ fi
   #echo "obj-y += vortex_gki.o" >> "$KSRC/drivers/misc/Makefile"
 #fi
 
-# [4.5] Display Refresh Rate Patch (300Hz)
+# [4.5] Rate Patch (300Hz)
 log "📺 Applying display refresh rate patch..."
 wget -qO Inject_300hz.sh https://raw.githubusercontent.com/Kingfinik98/build-vortex/refs/heads/6.x/inject_ksu/Inject_300hz.sh
 bash Inject_300hz.sh
