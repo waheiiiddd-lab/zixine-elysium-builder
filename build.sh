@@ -2,7 +2,7 @@
 
 # ==============================================================================
 # ZIXINE ELYSIUM KERNEL BUILD SYSTEM
-# Automated GKI Build Environment
+# Automated GKI Build Environment (Diagnostic Mode)
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ DEFCONFIG_FILE=$(find ./arch/arm64/configs -name "$KERNEL_DEFCONFIG")
 # ------------------------------------------------------------------------------
 # PATCHING ENGINE (HARDWARE & FEATURES)
 # ------------------------------------------------------------------------------
-log "⚙️ Initializing Zixine Elysium Patching Engine..."
+log "⚙️ Initializing Zixine Elysium Patching Engine (Safe Mode)..."
 
 # [4.1] Infinix GT 20 Pro Camera Fix (GKI 5.10)
 if [ "$KVER" == "5.10" ]; then
@@ -91,31 +91,32 @@ if [ "$KVER" == "5.10" ]; then
 fi
 
 # [4.2] Driver Adreno SkiaVK (GKI 5.10)
-#if [ "$KVER" == "5.10" ]; then
-  #log "🎮 Injecting Adreno SkiaVK library..."
-  #mkdir -p "$WORKDIR/vendor/lib64"
-  #curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/6.x/system/vendor/lib64/libgsl.so" -o "$WORKDIR/vendor/lib64/libgsl.so"
-#fi
-
- [4.3] Cpuset Optimizer (GKI 5.10)
 if [ "$KVER" == "5.10" ]; then
-  log "🧠 Optimizing Cpuset Configuration..."
-  curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/6.x/kernel/cgroup/cpuset.c" -o "$KERNEL_PATCHES/cpuset.c"
-  sed -i '/DEFINE_STATIC_KEY_FALSE(cpusets_enabled_key);/a\DEFINE_STATIC_KEY_FALSE(cpusets_insane_config_key);' "$KERNEL_PATCHES/cpuset.c"
-  mkdir -p "$KSRC/kernel/cgroup"
-  cp "$KERNEL_PATCHES/cpuset.c" "$KSRC/kernel/cgroup/cpuset.c"
+  log "🎮 Injecting Adreno SkiaVK library..."
+  mkdir -p "$WORKDIR/vendor/lib64"
+  curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/6.x/system/vendor/lib64/libgsl.so" -o "$WORKDIR/vendor/lib64/libgsl.so"
 fi
 
-# [4.4] GPU Tuning Injection (Universal)
-#log "⚡ Injecting GPU Performance Tuning..."
-#mkdir -p "$KSRC/drivers/misc"
-#cp "$KERNEL_PATCHES/vortex_gki.c" "$KSRC/drivers/misc/vortex_gki.c" 2>/dev/null || log "Warning: GPU tuning file not found locally."
-#if [ -f "$KSRC/drivers/misc/vortex_gki.c" ]; then
-  #sed -i '/vortex_gki/d' "$KSRC/drivers/misc/Makefile"
-  #echo "obj-y += vortex_gki.o" >> "$KSRC/drivers/misc/Makefile"
-#fi
+# [4.3] Cpuset Optimizer (GKI 5.10)
+# ⚠️ DEBUGGING: DIMATIKAN SEMENTARA KARENA DIDUGA MENYEBABKAN APP FREEZE
+# if [ "$KVER" == "5.10" ]; then
+#   log "🧠 Optimizing Cpuset Configuration..."
+#   curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/6.x/kernel/cgroup/cpuset.c" -o "$KERNEL_PATCHES/cpuset.c"
+#   sed -i '/DEFINE_STATIC_KEY_FALSE(cpusets_enabled_key);/a\DEFINE_STATIC_KEY_FALSE(cpusets_insane_config_key);' "$KERNEL_PATCHES/cpuset.c"
+#   mkdir -p "$KSRC/kernel/cgroup"
+#   cp "$KERNEL_PATCHES/cpuset.c" "$KSRC/kernel/cgroup/cpuset.c"
+# fi
 
-# [4.5] Rate Patch (300Hz)
+# [4.4] GPU Tuning Injection (Universal)
+log "⚡ Injecting GPU Performance Tuning..."
+mkdir -p "$KSRC/drivers/misc"
+cp "$KERNEL_PATCHES/vortex_gki.c" "$KSRC/drivers/misc/vortex_gki.c" 2>/dev/null || log "Warning: GPU tuning file not found locally."
+if [ -f "$KSRC/drivers/misc/vortex_gki.c" ]; then
+  sed -i '/vortex_gki/d' "$KSRC/drivers/misc/Makefile"
+  echo "obj-y += vortex_gki.o" >> "$KSRC/drivers/misc/Makefile"
+fi
+
+# [4.5] Display Refresh Rate Patch (300Hz)
 log "📺 Applying display refresh rate patch..."
 wget -qO Inject_300hz.sh https://raw.githubusercontent.com/Kingfinik98/build-vortex/refs/heads/6.x/inject_ksu/Inject_300hz.sh
 bash Inject_300hz.sh
@@ -132,10 +133,11 @@ if [ "$KVER" == "6.1" ]; then
 fi
 
 # [4.7] Esport Gaming Preferences
-#log "🎮 Applying Gaming Profile..."
-#curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/refs/heads/6.x/gaming/vortex.sh" -o vortex.sh
-#patch -p1 < vortex.sh 2>/dev/null || true
-#rm -f vortex.sh
+# ⚠️ DEBUGGING: DIMATIKAN SEMENTARA KARENA DIDUGA MEMBUAT CPU CRASH
+# log "🎮 Applying Gaming Profile..."
+# curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/refs/heads/6.x/gaming/vortex.sh" -o vortex.sh
+# patch -p1 < vortex.sh 2>/dev/null || true
+# rm -f vortex.sh
 
 # [4.8] SU Defconfig Injection
 log "🛡️ Injecting Root & Security configurations..."
@@ -155,7 +157,7 @@ log "🧰 Preparing Toolchains & Variables..."
 # Determine Variant Identity
 case "$KSU" in
   "yes") VARIANT="KSU" ;;
-  "vortexsu") VARIANT="VTX-base" ;; # Internal logic remains vortexsu, output is ZixineSU
+  "vortexsu") VARIANT="VTX-base" ;; 
   "no") VARIANT="VNL" ;;
 esac
 susfs_included && VARIANT+="+SuSFS"
@@ -196,7 +198,6 @@ cd "$KSRC" || exit
 # --- SU IMPLEMENTATION ---
 log "🔒 Configuring Superuser Implementation..."
 if ksu_included; then
-  # Standard KernelSU Setup
   for KSU_PATH in drivers/staging/kernelsu drivers/kernelsu KernelSU KernelSU-Next; do
     if [ -d "$KSU_PATH" ]; then
       KSU_DIR=$(dirname "$KSU_PATH")
@@ -209,16 +210,15 @@ if ksu_included; then
   config --enable CONFIG_KSU
   
   cd KernelSU-Next || exit
-  patch -p1 < "$KERNEL_PATCHES/ksu/ksun-add-more-managers-support.patch"
+  patch -p1 < "$KERNEL_PATCHES/ksu/ksun-add-more-managers-support.patch" || true
   cd "$OLDPWD" || exit
   
-  sed -i 's/#ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME/#if 0 \/\* CONFIG_KSU_SUSFS_SPOOF_UNAME Disabled to fix build \*\//' drivers/kernelsu/supercalls.c
+  sed -i 's/#ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME/#if 0 \/\* CONFIG_KSU_SUSFS_SPOOF_UNAME Disabled to fix build \*\//' drivers/kernelsu/supercalls.c 2>/dev/null || true
   if [ "$KVER" == "5.10" ]; then
-    sed -i '/^#if.*CONFIG_STACKPROTECTOR_PER_TASK/c\#if 0 \/\/ Disabled to fix duplicate symbol' drivers/kernelsu/ksu.c
+    sed -i '/^#if.*CONFIG_STACKPROTECTOR_PER_TASK/c\#if 0 \/\/ Disabled to fix duplicate symbol' drivers/kernelsu/ksu.c 2>/dev/null || true
   fi
 
 elif [ "$KSU" == "vortexsu" ]; then
-  # Custom SU Setup (Upstream Logic)
   log "Setting up core SU Manager..."
   curl -LSs "https://raw.githubusercontent.com/waheiiiddd-lab/VortexSU/refs/heads/main/kernel/setup.sh" | bash -s main
   
@@ -231,30 +231,19 @@ elif [ "$KSU" == "vortexsu" ]; then
     cp -r sus/kernel_patches/50_add_susfs_in_${SUSFS_BRANCH}.patch .
     patch -p1 < 50_add_susfs_in_${SUSFS_BRANCH}.patch || true
     
-    # === FIX KERNEL PANIC 5.10 ZYGISK / IDA_FREE ===
     log "Applying Anti-Panic patch for ida_free in namespace.c..."
-    # Menonaktifkan peringatan fatal ida_free yang menyebabkan reboot saat Zygisk berjalan
     sed -i 's/WARN_ON_ONCE(1);/\/\/WARN_ON_ONCE(1);/g' lib/idr.c 2>/dev/null || true
-    
-    # Mengganti BUG_ON menjadi WARN_ON
     sed -i 's/BUG_ON/WARN_ON/g' fs/namespace.c 2>/dev/null || true
-    # Memperbaiki BUILD_BUG_ON yang ikut terganti secara tidak sengaja
     sed -i 's/BUILD_WARN_ON/BUILD_BUG_ON/g' fs/namespace.c 2>/dev/null || true
-    # ===============================================
 
     SUSFS_VERSION=$(grep -E '^#define SUSFS_VERSION' ./include/linux/susfs.h | cut -d' ' -f3 | sed 's/"//g')
-    
-    # KPM DIMATIKAN KARENA TIDAK STABIL DAN SERING BENTROK DENGAN ZYGISK
-    # config --enable CONFIG_KPM
     config --disable CONFIG_KPM
-    
     config --enable CONFIG_KSU_MULTI_MANAGER_SUPPORT
     config --enable CONFIG_KSU_SUSFS
   else
     config --enable CONFIG_KSU_SUSFS
   fi
 fi
-
 
 # --- SUSFS IMPLEMENTATION ---
 if susfs_included; then
@@ -272,7 +261,6 @@ if susfs_included; then
     cp -R "$SUSFS_DIR/kernel_patches/include/"* ./include
     patch -p1 < "$SUSFS_DIR/kernel_patches/50_add_susfs_in_${SUSFS_BRANCH}.patch" || true
     
-    # Version specific SUSFS fixes
     if [ $(echo "$LINUX_VERSION_CODE" | head -c4) -eq 6630 ]; then
       patch -p1 < "$KERNEL_PATCHES/susfs/namespace.c_fix.patch" || true
       patch -p1 < "$KERNEL_PATCHES/susfs/task_mmu.c_fix.patch" || true
@@ -304,14 +292,13 @@ EOF
       patch -p1 < "$KERNEL_PATCHES/susfs/pershoot-susfs-k5.10.patch" || true
     fi
 
-    # CRC Fixes
     if [ $(echo "$LINUX_VERSION_CODE" | head -c1) -eq 6 ]; then
       if [ "$KSU" == "yes" ]; then
         if [ "$KVER" == "6.1" ]; then
           sed -i '/#include <linux\/susfs_def.h>/i #ifndef __GENKSYMS__' fs/statfs.c
           sed -i '/#include <linux\/susfs_def.h>/a #endif' fs/statfs.c
         else
-          patch -p1 < "$KERNEL_PATCHES/susfs/fix-statfs-crc-mismatch-susfs.patch"
+          patch -p1 < "$KERNEL_PATCHES/susfs/fix-statfs-crc-mismatch-susfs.patch" || true
         fi
       elif [ "$KSU" == "vortexsu" ] && [ "$KVER" == "6.1" ]; then
         sed -i '/#include <linux\/susfs_def.h>/i #ifndef __GENKSYMS__' fs/statfs.c
@@ -378,7 +365,6 @@ config --enable CONFIG_TCP_CONG_WESTWOOD
 config --enable CONFIG_DEVFREQ_GOV_PERFORMANCE
 if [ "$KVER" == "5.10" ]; then
   config --enable CONFIG_MQ_DEADLINE
-  #config --enable CONFIG_ANDROID_LOW_MEMORY_KILLER
 fi
 
 if [ "$DEFCONFIG_TO_MERGE" ]; then
@@ -407,6 +393,13 @@ git clone -q --depth=1 "$ANYKERNEL_REPO" -b "$ANYKERNEL_BRANCH" anykernel
 cd anykernel || exit
 
 BUILD_DATE=$(date -d "$KBUILD_BUILD_TIMESTAMP" +"%Y%m%d-%H%M")
+if [ "$STATUS" == "BETA" ]; then
+  AK3_ZIP_NAME=${AK3_ZIP_NAME//BUILD_DATE/$BUILD_DATE}
+  AK3_ZIP_NAME=${AK3_ZIP_NAME//-REL/}
+else
+  AK3_ZIP_NAME=${AK3_ZIP_NAME//-BUILD_DATE/}
+  AK3_ZIP_NAME=${AK3_ZIP_NAME//REL/$RELEASE}
+fi
 
 cp "$KERNEL_IMAGE" .
 zip -r9 "$WORKDIR/$AK3_ZIP_NAME" ./*
