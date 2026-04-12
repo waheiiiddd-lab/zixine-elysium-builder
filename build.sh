@@ -132,10 +132,10 @@ if [ "$KVER" == "6.1" ]; then
 fi
 
 # [4.7] Esport Gaming Preferences
-log "🎮 Applying Gaming Profile..."
-curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/refs/heads/6.x/gaming/vortex.sh" -o vortex.sh
-patch -p1 < vortex.sh 2>/dev/null || true
-rm -f vortex.sh
+#log "🎮 Applying Gaming Profile..."
+#curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/refs/heads/6.x/gaming/vortex.sh" -o vortex.sh
+#patch -p1 < vortex.sh 2>/dev/null || true
+#rm -f vortex.sh
 
 # [4.8] SU Defconfig Injection
 log "🛡️ Injecting Root & Security configurations..."
