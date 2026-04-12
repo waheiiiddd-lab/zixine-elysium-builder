@@ -98,13 +98,13 @@ if [ "$KVER" == "5.10" ]; then
 fi
 
 # [4.3] Cpuset Optimizer (GKI 5.10)
-if [ "$KVER" == "5.10" ]; then
-  log "🧠 Optimizing Cpuset Configuration..."
-  curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/6.x/kernel/cgroup/cpuset.c" -o "$KERNEL_PATCHES/cpuset.c"
-  sed -i '/DEFINE_STATIC_KEY_FALSE(cpusets_enabled_key);/a\DEFINE_STATIC_KEY_FALSE(cpusets_insane_config_key);' "$KERNEL_PATCHES/cpuset.c"
-  mkdir -p "$KSRC/kernel/cgroup"
-  cp "$KERNEL_PATCHES/cpuset.c" "$KSRC/kernel/cgroup/cpuset.c"
-fi
+#if [ "$KVER" == "5.10" ]; then
+ # log "🧠 Optimizing Cpuset Configuration..."
+  #curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/6.x/kernel/cgroup/cpuset.c" -o "$KERNEL_PATCHES/cpuset.c"
+ # sed -i '/DEFINE_STATIC_KEY_FALSE(cpusets_enabled_key);/a\DEFINE_STATIC_KEY_FALSE(cpusets_insane_config_key);' "$KERNEL_PATCHES/cpuset.c"
+#  mkdir -p "$KSRC/kernel/cgroup"
+ # cp "$KERNEL_PATCHES/cpuset.c" "$KSRC/kernel/cgroup/cpuset.c"
+#fi
 
 # [4.4] GPU Tuning Injection (Universal)
 log "⚡ Injecting GPU Performance Tuning..."
