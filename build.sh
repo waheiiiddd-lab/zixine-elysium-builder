@@ -97,23 +97,23 @@ if [ "$KVER" == "5.10" ]; then
   curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/6.x/system/vendor/lib64/libgsl.so" -o "$WORKDIR/vendor/lib64/libgsl.so"
 fi
 
-# [4.3] Cpuset Optimizer (GKI 5.10)
-#if [ "$KVER" == "5.10" ]; then
- # log "🧠 Optimizing Cpuset Configuration..."
-  #curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/6.x/kernel/cgroup/cpuset.c" -o "$KERNEL_PATCHES/cpuset.c"
- # sed -i '/DEFINE_STATIC_KEY_FALSE(cpusets_enabled_key);/a\DEFINE_STATIC_KEY_FALSE(cpusets_insane_config_key);' "$KERNEL_PATCHES/cpuset.c"
-#  mkdir -p "$KSRC/kernel/cgroup"
- # cp "$KERNEL_PATCHES/cpuset.c" "$KSRC/kernel/cgroup/cpuset.c"
-#fi
+ [4.3] Cpuset Optimizer (GKI 5.10)
+if [ "$KVER" == "5.10" ]; then
+  log "🧠 Optimizing Cpuset Configuration..."
+  curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/6.x/kernel/cgroup/cpuset.c" -o "$KERNEL_PATCHES/cpuset.c"
+  sed -i '/DEFINE_STATIC_KEY_FALSE(cpusets_enabled_key);/a\DEFINE_STATIC_KEY_FALSE(cpusets_insane_config_key);' "$KERNEL_PATCHES/cpuset.c"
+  mkdir -p "$KSRC/kernel/cgroup"
+  cp "$KERNEL_PATCHES/cpuset.c" "$KSRC/kernel/cgroup/cpuset.c"
+fi
 
 # [4.4] GPU Tuning Injection (Universal)
-log "⚡ Injecting GPU Performance Tuning..."
-mkdir -p "$KSRC/drivers/misc"
-cp "$KERNEL_PATCHES/vortex_gki.c" "$KSRC/drivers/misc/vortex_gki.c" 2>/dev/null || log "Warning: GPU tuning file not found locally."
-if [ -f "$KSRC/drivers/misc/vortex_gki.c" ]; then
-  sed -i '/vortex_gki/d' "$KSRC/drivers/misc/Makefile"
-  echo "obj-y += vortex_gki.o" >> "$KSRC/drivers/misc/Makefile"
-fi
+#log "⚡ Injecting GPU Performance Tuning..."
+#mkdir -p "$KSRC/drivers/misc"
+#cp "$KERNEL_PATCHES/vortex_gki.c" "$KSRC/drivers/misc/vortex_gki.c" 2>/dev/null || log "Warning: GPU tuning file not found locally."
+#if [ -f "$KSRC/drivers/misc/vortex_gki.c" ]; then
+  #sed -i '/vortex_gki/d' "$KSRC/drivers/misc/Makefile"
+  #echo "obj-y += vortex_gki.o" >> "$KSRC/drivers/misc/Makefile"
+#fi
 
 # [4.5] Display Refresh Rate Patch (300Hz)
 log "📺 Applying display refresh rate patch..."
