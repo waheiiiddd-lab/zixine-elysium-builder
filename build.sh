@@ -232,10 +232,8 @@ elif [ "$KSU" == "vortexsu" ]; then
     patch -p1 < 50_add_susfs_in_${SUSFS_BRANCH}.patch || true
     
     log "Applying Anti-Panic patch for ida_free in namespace.c..."
-    sed -i 's/WARN_ON_ONCE(1);/\/\/WARN_ON_ONCE(1);/g' lib/idr.c 2>/dev/null || true
-    sed -i 's/BUG_ON/WARN_ON/g' fs/namespace.c 2>/dev/null || true
-    sed -i 's/BUILD_WARN_ON/BUILD_BUG_ON/g' fs/namespace.c 2>/dev/null || true
-
+    sed -i 's/WARN_ON_ONCE(1);///WARN_ON_ONCE(1);/g' lib/idr.c 2>/dev/null || true
+    
     SUSFS_VERSION=$(grep -E '^#define SUSFS_VERSION' ./include/linux/susfs.h | cut -d' ' -f3 | sed 's/"//g')
     config --disable CONFIG_KPM
     config --enable CONFIG_KSU_MULTI_MANAGER_SUPPORT
