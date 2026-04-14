@@ -141,21 +141,21 @@ static void zixine_stop(struct cpufreq_policy *policy) {
 
 /* --- REGISTERING 3 GOVERNORS --- */
 
-#VELOCITY
+//#VELOCITY
 static int z_vel_init(struct cpufreq_policy *p) { return zixine_init_common(p, 0); }
 static struct cpufreq_governor gov_velocity = {
     .name = "zixine_velocity", .init = z_vel_init, .exit = zixine_exit_common,
     .start = zixine_start, .stop = zixine_stop, .owner = THIS_MODULE,
 };
 
-#OVERDRIVE
+//#OVERDRIVE
 static int z_ovd_init(struct cpufreq_policy *p) { return zixine_init_common(p, 1); }
 static struct cpufreq_governor gov_overdrive = {
     .name = "zixine_overdrive", .init = z_ovd_init, .exit = zixine_exit_common,
     .start = zixine_start, .stop = zixine_stop, .owner = THIS_MODULE,
 };
 
-#ECOPULSE
+//#ECOPULSE
 static int z_eco_init(struct cpufreq_policy *p) { return zixine_init_common(p, 2); }
 static struct cpufreq_governor gov_ecopulse = {
     .name = "zixine_ecopulse", .init = z_eco_init, .exit = zixine_exit_common,
