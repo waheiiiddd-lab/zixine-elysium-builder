@@ -411,6 +411,7 @@ fi
 
 if [ "$TODO" == "defconfig" ]; then
   upload_file "$OUTDIR/.config"
+  exit 0
 fi
 
 # Execute Build
