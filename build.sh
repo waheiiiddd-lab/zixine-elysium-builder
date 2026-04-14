@@ -116,6 +116,42 @@ if [ -f "$KSRC/drivers/misc/vortex_gki.c" ]; then
   echo "obj-y += vortex_gki.o" >> "$KSRC/drivers/misc/Makefile"
 fi
 
+# --- INJECT VORTEXCORE GOVERNOR (GKI 5.10, 6.1, 6.6) ---
+if [ "$KVER" == "5.10" ] || [ "$KVER" == "6.1" ] || [ "$KVER" == "6.6" ]; then
+  log "Injecting Zixine Unified Governor (Velocity, Overdrive, EcoPulse)..."
+  
+  # 1. Copy source file ke kernel tree
+  cp "$WORKDIR/governor_zixine.c" "$KSRC/drivers/cpufreq/governor_zixine.c"
+  
+  # 2. Add to Makefile
+  if ! grep -q "governor_zixine.o" "$KSRC/drivers/cpufreq/Makefile"; then
+    echo "obj-y += governor_zixine.o" >> "$KSRC/drivers/cpufreq/Makefile"
+    log "Zixine added to cpufreq Makefile."
+  else
+    log "Zixine already in cpufreq Makefile."
+  fi
+  
+  # 3. Add to Kconfig
+  if ! grep -q "CPU_FREQ_GOV_ZIXINE" "$KSRC/drivers/cpufreq/Kconfig"; then
+    cat << 'KCONF_EOF' >> "$KSRC/drivers/cpufreq/Kconfig"
+
+config CPU_FREQ_GOV_ZIXINE
+    tristate "Zixine Unified CPU frequency policy governor"
+    depends on CPU_FREQ
+    help
+      Zixine Governor Suite:
+      - Velocity: Smart Hybrid with Load Velocity tracking.
+      - Overdrive: Performance focused with 60% dynamic floor.
+      - EcoPulse: Battery saver with rapid fall logic.
+
+      If in doubt, say N.
+KCONF_EOF
+    log "Zixine Suite added to cpufreq Kconfig."
+  else
+    log "Zixine already in Kconfig."
+  fi
+fi
+
 # [4.5] Display Refresh Rate Patch (300Hz)
 log "📺 Applying display refresh rate patch..."
 wget -qO Inject_300hz.sh https://raw.githubusercontent.com/Kingfinik98/build-vortex/refs/heads/6.x/inject_ksu/Inject_300hz.sh
