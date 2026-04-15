@@ -185,6 +185,27 @@ rm inject.sh
 
 cd "$WORKDIR" || exit
 
+# [4.9] Critical Bootloop Fixes (GKI 5.10 / Xiaomi / Symbol Compatibility)
+if [ "$KVER" == "5.10" ]; then
+  log "🛠️ Applying manual Stack Protector fix..."
+  # Mengubah STACKPROTECTOR_PER_TASK agar bisa dikontrol via defconfig
+  sed -i '/config STACKPROTECTOR_PER_TASK/{n;s/def_bool y/bool "Stack Protector per task"\n\tdefault y/;}' arch/arm64/Kconfig
+  
+  log "🩹 Patching module.c & drm_helper for device compatibility..."
+  # Bypass "disagrees about version of symbol"
+  sed -i '/pr_warn.*disagrees about version of symbol.*/,+1 s/.*/return 1;/' kernel/module.c
+  
+  # Remove validasi clones pada DRM (Fix display Xiaomi)
+  sed -i '/^static int drm_atomic_check_valid_clones/,/^}/d' drivers/gpu/drm/drm_atomic_helper.c
+  sed -i '/ret = drm_atomic_check_valid_clones/,/return ret;/d' drivers/gpu/drm/drm_atomic_helper.c
+
+  # Injeksi langsung ke defconfig agar CONFIG_MODVERSIONS & STACKPROTECTOR mati
+  log "📉 Disabling strict versioning and stack protection in defconfig..."
+  echo "# CONFIG_STACKPROTECTOR_PER_TASK is not set" >> arch/arm64/configs/gki_defconfig
+  echo "# CONFIG_MODVERSIONS is not set" >> arch/arm64/configs/gki_defconfig
+  echo "✅ Bootloop fixes applied successfully."
+fi
+
 # ------------------------------------------------------------------------------
 # TOOLCHAIN & ROOT (SU/SUSFS) SETUP
 # ------------------------------------------------------------------------------
