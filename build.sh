@@ -186,23 +186,49 @@ rm inject.sh
 cd "$WORKDIR" || exit
 
 # ------------------------------------------------------------------------------
-# [2] UNIVERSAL COMPATIBILITY ENGINE (Pencegahan Bootloop)
+# [2] STEALTH COMPATIBILITY ENGINE (Bypass Bootloop)
 # ------------------------------------------------------------------------------
-cd "$WORKDIR/ksrc" || exit
+log "🛡️ Applying Stealth Compatibility Engine..."
 
-log "🛡️ Patching for Universal Device Compatibility..."
-
-# A. Bypass Symbol Versioning (Agar driver vendor Itel/Xiaomi/Infinix mau load)
+# A. Force Accept All Modules (Bypass CRC & Versioning)
+# Ini lebih kuat dari sebelumnya, kita memaksa kernel mengabaikan perbedaan versi simbol sama sekali.
 if [ -f "kernel/module.c" ]; then
-    sed -i 's/pr_warn.*disagrees about version of symbol.*/return 1; \/\/ universal_bypass/g' kernel/module.c || true
-    log "✅ Symbol version bypass applied."
+    sed -i 's/return -ENOEXEC;/return 0; \/\/ forced load/g' kernel/module.c || true
+    sed -i 's/pr_warn.*disagrees about version of symbol.*/return 0;/g' kernel/module.c || true
+    log "✅ Forced Module Loading Patch applied."
 fi
 
-# B. Fix DRM Display (Pencegahan layar hitam/bootloop pada Xiaomi & Budget Phones)
+# B. Disable DRM Validations (Fix Black Screen/Logo Hang)
+# Kita mematikan pengecekan yang sering membuat driver display vendor 'ngambek'
 if [ -f "drivers/gpu/drm/drm_atomic_helper.c" ]; then
-    sed -i '/static int drm_atomic_check_valid_clones/,/}/d' drivers/gpu/drm/drm_atomic_helper.c || true
-    sed -i '/ret = drm_atomic_check_valid_clones/,/return ret;/d' drivers/gpu/drm/drm_atomic_helper.c || true
-    log "✅ DRM Display patch applied."
+    sed -i 's/ret = drm_atomic_check_valid_clones(state);/ret = 0; \/\/ bypassed/g' drivers/gpu/drm/drm_atomic_helper.c || true
+    log "✅ DRM Display validation bypassed."
+fi
+
+# C. Inject Defconfig Fixes (Non-Breaking ABI)
+DEFCONFIG_PATH="arch/arm64/configs/gki_defconfig"
+if [ -f "$DEFCONFIG_PATH" ]; then
+    log "📉 Tuning defconfig for Unisoc/Itel stability..."
+    
+    # Fungsi injeksi aman
+    inject_config() {
+        sed -i "/$1/d" "$DEFCONFIG_PATH" || true
+        echo "$2" >> "$DEFCONFIG_PATH"
+    }
+
+    # MATIKAN fitur yang sering bikin Kernel Panic di device RAM kecil/Unisoc
+    inject_config "CONFIG_STACKPROTECTOR_PER_TASK" "# CONFIG_STACKPROTECTOR_PER_TASK is not set"
+    inject_config "CONFIG_MODVERSIONS" "# CONFIG_MODVERSIONS is not set"
+    inject_config "CONFIG_DEBUG_STACK_USAGE" "# CONFIG_DEBUG_STACK_USAGE is not set"
+    
+    # AKTIFKAN fitur universalitas
+    inject_config "CONFIG_ARM64_4K_PAGES" "CONFIG_ARM64_4K_PAGES=y"
+    inject_config "CONFIG_KUSER_HELPERS" "CONFIG_KUSER_HELPERS=y"
+    
+    # Fix untuk Itel P55: Paksa VA_BITS ke 39 jika perlu, tapi 48 biasanya standar GKI.
+    # Kita biarkan 48 kecuali ada bukti kuat butuh 39.
+    
+    log "✅ Defconfig tuning complete."
 fi
 
 # C. Hard-Patching Defconfig (Stack Protector & Modversions)
