@@ -185,121 +185,58 @@ rm inject.sh
 
 cd "$WORKDIR" || exit
 
-# ------------------------------------------------------------------------------
-# [2] STEALTH COMPATIBILITY ENGINE (Bypass Bootloop)
-# ------------------------------------------------------------------------------
-log "🛡️ Applying Stealth Compatibility Engine..."
+# 4. Universal Stealth Engine
+cd "$WORKDIR/ksrc" || exit
 
-# A. Force Accept All Modules (Bypass CRC & Versioning)
-# Ini lebih kuat dari sebelumnya, kita memaksa kernel mengabaikan perbedaan versi simbol sama sekali.
+log "🛡️ Applying Stealth & Compatibility Patches..."
+
+# A. Bypass Symbol Integrity (Agar driver vendor Itel/Advan tetap load)
+# Menggunakan sed aman tanpa range baris agar tidak error di CI
 if [ -f "kernel/module.c" ]; then
-    sed -i 's/return -ENOEXEC;/return 0; \/\/ forced load/g' kernel/module.c || true
+    sed -i 's/return -ENOEXEC;/return 0;/g' kernel/module.c || true
     sed -i 's/pr_warn.*disagrees about version of symbol.*/return 0;/g' kernel/module.c || true
-    log "✅ Forced Module Loading Patch applied."
+    log "✅ Symbol bypass applied."
 fi
 
-# B. Disable DRM Validations (Fix Black Screen/Logo Hang)
-# Kita mematikan pengecekan yang sering membuat driver display vendor 'ngambek'
+# B. Fix Display Hang (Xiaomi/Infinix fix)
 if [ -f "drivers/gpu/drm/drm_atomic_helper.c" ]; then
-    sed -i 's/ret = drm_atomic_check_valid_clones(state);/ret = 0; \/\/ bypassed/g' drivers/gpu/drm/drm_atomic_helper.c || true
-    log "✅ DRM Display validation bypassed."
+    sed -i 's/ret = drm_atomic_check_valid_clones(state);/ret = 0;/g' drivers/gpu/drm/drm_atomic_helper.c || true
+    log "✅ Display fix applied."
 fi
 
-# C. Inject Defconfig Fixes (Non-Breaking ABI)
-DEFCONFIG_PATH="arch/arm64/configs/gki_defconfig"
-if [ -f "$DEFCONFIG_PATH" ]; then
-    log "📉 Tuning defconfig for Unisoc/Itel stability..."
-    
-    # Fungsi injeksi aman
-    inject_config() {
-        sed -i "/$1/d" "$DEFCONFIG_PATH" || true
-        echo "$2" >> "$DEFCONFIG_PATH"
-    }
-
-    # MATIKAN fitur yang sering bikin Kernel Panic di device RAM kecil/Unisoc
-    inject_config "CONFIG_STACKPROTECTOR_PER_TASK" "# CONFIG_STACKPROTECTOR_PER_TASK is not set"
-    inject_config "CONFIG_MODVERSIONS" "# CONFIG_MODVERSIONS is not set"
-    inject_config "CONFIG_DEBUG_STACK_USAGE" "# CONFIG_DEBUG_STACK_USAGE is not set"
-    
-    # AKTIFKAN fitur universalitas
-    inject_config "CONFIG_ARM64_4K_PAGES" "CONFIG_ARM64_4K_PAGES=y"
-    inject_config "CONFIG_KUSER_HELPERS" "CONFIG_KUSER_HELPERS=y"
-    
-    # Fix untuk Itel P55: Paksa VA_BITS ke 39 jika perlu, tapi 48 biasanya standar GKI.
-    # Kita biarkan 48 kecuali ada bukti kuat butuh 39.
-    
-    log "✅ Defconfig tuning complete."
-fi
-
-# [4.10] Advan & Unisoc Special Compatibility Fix
-if [ "$KVER" == "5.10" ]; then
-    log "🛠️ Applying Advan/Unisoc Security Bypass..."
-
-    # 1. Disable DM-Verity & Avb di level Kernel (Pencegahan Bootloop Merah)
-    # Ini membantu agar kernel tidak panik saat veritas partisi gagal
-    inject_config "CONFIG_DM_VERITY" "# CONFIG_DM_VERITY is not set"
-    inject_config "CONFIG_DM_VERITY_FEC" "# CONFIG_DM_VERITY_FEC is not set"
-
-   # Ganti bagian SELinux di build.sh sebelumnya dengan ini:
-    inject_config "CONFIG_SECURITY_SELINUX" "CONFIG_SECURITY_SELINUX=y"
-    inject_config "CONFIG_SECURITY_SELINUX_BOOTPARAM" "CONFIG_SECURITY_SELINUX_BOOTPARAM=y"
-# Kita tidak memaksa Permissive di sini agar SafetyNet tetap hijau
-
-    # 3. Fix Unisoc Trusty Hang
-    # Mematikan pengecekan berlebih pada subsistem Unisoc
-    inject_config "CONFIG_UNISOC_TRUSTY" "CONFIG_UNISOC_TRUSTY=y"
-    
-    # 4. Patching init di kernel agar selalu menerima SELinux Permissive
-    # Ini cara 'nakal' agar kernel tetap boot meski SELinux berantakan
-    if [ -f "security/selinux/avc.c" ]; then
-        sed -i 's/selinux_enforcing = 1;/selinux_enforcing = 0;/g' security/selinux/hooks.c || true
-    fi
-
-    log "✅ Advan-Unisoc security patches applied."
-fi
-
-# [4.11] Play Integrity & Stealth Fixes
-log "🛡️ Applying Stealth & Integrity fixes..."
-
-# A. Sembunyikan status 'Modified' pada Localversion
-# Menghapus tanda '+' yang otomatis ditambahkan oleh Git agar kernel terlihat 'Official'
+# C. Stealth Play Integrity (Sembunyikan status modifikasi)
 sed -i 's/echo "+"/# echo "+"/g' scripts/setlocalversion || true
+log "✅ Kernel localversion spoofed."
 
-# B. Disable Kernel Debugging yang mencurigakan bagi App Bank
-inject_config "CONFIG_KALLSYMS_ALL" "# CONFIG_KALLSYMS_ALL is not set"
-inject_config "CONFIG_PANIC_ON_OOPS" "# CONFIG_PANIC_ON_OOPS is not set"
-
-# C. Spoofing Bootloader State (Khusus untuk GKI)
-# Memaksa status bootloader terlihat terkunci di mata kernel
-if [ -f "init/main.c" ]; then
-    sed -i 's/panic("No init found./\/\/ panic("No init found./g' init/main.c || true
-fi
-
-# C. Hard-Patching Defconfig (Stack Protector & Modversions)
+# D. Hard-Patch Defconfig (Mencegah Bootloop & Menjaga Integritas)
 DEFCONFIG_PATH="arch/arm64/configs/gki_defconfig"
-
 if [ -f "$DEFCONFIG_PATH" ]; then
-    log "📉 Modifying defconfig for stability..."
+    log "📉 Tuning defconfig for Universal Integrity..."
     
-    # Fungsi pembantu untuk injeksi config secara aman
-    fix_config() {
-        local key=$1
-        local val=$2
-        sed -i "/$key/d" "$DEFCONFIG_PATH" || true
-        echo "$val" >> "$DEFCONFIG_PATH"
+    # Fungsi injeksi yang diperkuat (Cek file tiap kali eksekusi)
+    safe_inject() {
+        if [ -f "$DEFCONFIG_PATH" ]; then
+            sed -i "/$1/d" "$DEFCONFIG_PATH" || true
+            echo "$2" >> "$DEFCONFIG_PATH"
+        fi
     }
 
-    # Pencegahan Bootloop Chipset Unisoc/MTK (Itel P55)
-    fix_config "CONFIG_STACKPROTECTOR_PER_TASK" "# CONFIG_STACKPROTECTOR_PER_TASK is not set"
-    fix_config "CONFIG_MODVERSIONS" "# CONFIG_MODVERSIONS is not set"
+    # Pencegahan Bootloop Unisoc (Itel P55/Advan)
+    safe_inject "CONFIG_STACKPROTECTOR_PER_TASK" "# CONFIG_STACKPROTECTOR_PER_TASK is not set"
+    safe_inject "CONFIG_MODVERSIONS" "# CONFIG_MODVERSIONS is not set"
     
-    # Keamanan Page Size & Arsitektur
-    fix_config "CONFIG_ARM64_4K_PAGES" "CONFIG_ARM64_4K_PAGES=y"
-    fix_config "CONFIG_KUSER_HELPERS" "CONFIG_KUSER_HELPERS=y"
+    # Menjaga Status Enforcing untuk Play Integrity (App Bank Aman)
+    safe_inject "CONFIG_SECURITY_SELINUX" "CONFIG_SECURITY_SELINUX=y"
+    safe_inject "CONFIG_SECURITY_SELINUX_DEVELOP" "# CONFIG_SECURITY_SELINUX_DEVELOP is not set"
     
-    log "✅ Defconfig hard-patched."
-else
-    log "⚠️ Warning: gki_defconfig not found at $DEFCONFIG_PATH"
+    # Menonaktifkan DM-Verity agar tidak 'Device Corrupted'
+    safe_inject "CONFIG_DM_VERITY" "# CONFIG_DM_VERITY is not set"
+    safe_inject "CONFIG_DM_VERITY_FEC" "# CONFIG_DM_VERITY_FEC is not set"
+
+    # Stabilitas Page Size
+    safe_inject "CONFIG_ARM64_4K_PAGES" "CONFIG_ARM64_4K_PAGES=y"
+    
+    log "✅ Defconfig tuning success."
 fi
 
 # ------------------------------------------------------------------------------
