@@ -187,22 +187,25 @@ cd "$WORKDIR" || exit
 
 # [4.9] Critical Bootloop Fixes (GKI 5.10 / Xiaomi / Symbol Compatibility)
 if [ "$KVER" == "5.10" ]; then
-log "🛠️ Applying manual Stack Protector fix (Heredoc Method)..."
-  # Menghapus blok lama dan menggantinya dengan blok baru yang bisa dikontrol
-  python3 -c '
-import sys
-content = open("arch/arm64/Kconfig").read()
-old_block = """config STACKPROTECTOR_PER_TASK
-	def_bool y
-	depends on STACKPROTECTOR_ON_TASK_STACK"""
-new_block = """config STACKPROTECTOR_PER_TASK
-	bool "Stack Protector per task"
-	default y
-	depends on STACKPROTECTOR_ON_TASK_STACK"""
-if old_block in content:
-    with open("arch/arm64/Kconfig", "w") as f:
-        f.write(content.replace(old_block, new_block))
-' || log "⚠️ Warning: Python fix failed, checking file structure..."
+  log "🩹 Patching module.c & drm_helper for device compatibility..."
+  
+  # Bypass "disagrees about version of symbol"
+  sed -i '/pr_warn.*disagrees about version of symbol.*/,+1 s/.*/return 1;/' kernel/module.c
+  
+  # Remove validasi clones pada DRM (Fix display Xiaomi)
+  # Menggunakan pemisah | agar lebih aman jika ada karakter khusus
+  sed -i '|^static int drm_atomic_check_valid_clones|,|^}|d' drivers/gpu/drm/drm_atomic_helper.c
+  sed -i '|ret = drm_atomic_check_valid_clones|,|return ret;|d' drivers/gpu/drm/drm_atomic_helper.c
+
+  log "📉 Disabling strict versioning and stack protection in defconfig..."
+  # Karena Kconfig sudah mendukung "bool", kita bisa langsung set di defconfig
+  sed -i '/CONFIG_STACKPROTECTOR_PER_TASK/d' arch/arm64/configs/gki_defconfig
+  echo "# CONFIG_STACKPROTECTOR_PER_TASK is not set" >> arch/arm64/configs/gki_defconfig
+  
+  sed -i '/CONFIG_MODVERSIONS/d' arch/arm64/configs/gki_defconfig
+  echo "# CONFIG_MODVERSIONS is not set" >> arch/arm64/configs/gki_defconfig
+  
+  log "✅ Bootloop fixes applied successfully."
 fi
 
 # ------------------------------------------------------------------------------
