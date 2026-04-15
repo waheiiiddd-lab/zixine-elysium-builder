@@ -185,33 +185,51 @@ rm inject.sh
 
 cd "$WORKDIR" || exit
 
-# [4.9] Universal Compatibility Engine
-if [ "$KVER" == "5.10" ]; then
-  log "🛡️ Ensuring Universal GKI Compliance..."
+# ------------------------------------------------------------------------------
+# [2] UNIVERSAL COMPATIBILITY ENGINE (Pencegahan Bootloop)
+# ------------------------------------------------------------------------------
+cd "$WORKDIR/ksrc" || exit
 
-  # 1. Matikan Stack Protector Per-Task (Penyebab utama bootloop di chipset Unisoc/MTK)
-  # Di Kconfigmu sudah 'bool', jadi cukup hapus paksa dari defconfig
-  sed -i '/CONFIG_STACKPROTECTOR_PER_TASK/d' arch/arm64/configs/gki_defconfig || true
-  echo "# CONFIG_STACKPROTECTOR_PER_TASK is not set" >> arch/arm64/configs/gki_defconfig
+log "🛡️ Patching for Universal Device Compatibility..."
 
-  # 2. Matikan MODVERSIONS
-  # Ini agar kernel mau menerima modul vendor meskipun CRC-nya sedikit berbeda
-  sed -i '/CONFIG_MODVERSIONS/d' arch/arm64/configs/gki_defconfig || true
-  echo "# CONFIG_MODVERSIONS is not set" >> arch/arm64/configs/gki_defconfig
+# A. Bypass Symbol Versioning (Agar driver vendor Itel/Xiaomi/Infinix mau load)
+if [ -f "kernel/module.c" ]; then
+    sed -i 's/pr_warn.*disagrees about version of symbol.*/return 1; \/\/ universal_bypass/g' kernel/module.c || true
+    log "✅ Symbol version bypass applied."
+fi
 
-  # 3. Force 4KB Page Size (Wajib untuk Universalitas)
-  # Banyak perangkat budget (seperti Itel) tidak mendukung 16KB/64KB
-  sed -i '/CONFIG_ARM64_4K_PAGES/d' arch/arm64/configs/gki_defconfig || true
-  echo "CONFIG_ARM64_4K_PAGES=y" >> arch/arm64/configs/gki_defconfig
+# B. Fix DRM Display (Pencegahan layar hitam/bootloop pada Xiaomi & Budget Phones)
+if [ -f "drivers/gpu/drm/drm_atomic_helper.c" ]; then
+    sed -i '/static int drm_atomic_check_valid_clones/,/}/d' drivers/gpu/drm/drm_atomic_helper.c || true
+    sed -i '/ret = drm_atomic_check_valid_clones/,/return ret;/d' drivers/gpu/drm/drm_atomic_helper.c || true
+    log "✅ DRM Display patch applied."
+fi
 
-  # 4. Bypass Symbol Versioning (Jaring Pengaman Driver Vendor)
-  sed -i 's/pr_warn.*disagrees about version of symbol.*/return 1; \/\/ universal_bypass/g' kernel/module.c || true
+# C. Hard-Patching Defconfig (Stack Protector & Modversions)
+DEFCONFIG_PATH="arch/arm64/configs/gki_defconfig"
 
-  # 5. Fix Display untuk Perangkat Xiaomi/Budget
-  sed -i '/static int drm_atomic_check_valid_clones/,/}/d' drivers/gpu/drm/drm_atomic_helper.c || true
-  sed -i '/ret = drm_atomic_check_valid_clones/,/return ret;/d' drivers/gpu/drm/drm_atomic_helper.c || true
+if [ -f "$DEFCONFIG_PATH" ]; then
+    log "📉 Modifying defconfig for stability..."
+    
+    # Fungsi pembantu untuk injeksi config secara aman
+    fix_config() {
+        local key=$1
+        local val=$2
+        sed -i "/$key/d" "$DEFCONFIG_PATH" || true
+        echo "$val" >> "$DEFCONFIG_PATH"
+    }
 
-  log "✅ Universal patches applied."
+    # Pencegahan Bootloop Chipset Unisoc/MTK (Itel P55)
+    fix_config "CONFIG_STACKPROTECTOR_PER_TASK" "# CONFIG_STACKPROTECTOR_PER_TASK is not set"
+    fix_config "CONFIG_MODVERSIONS" "# CONFIG_MODVERSIONS is not set"
+    
+    # Keamanan Page Size & Arsitektur
+    fix_config "CONFIG_ARM64_4K_PAGES" "CONFIG_ARM64_4K_PAGES=y"
+    fix_config "CONFIG_KUSER_HELPERS" "CONFIG_KUSER_HELPERS=y"
+    
+    log "✅ Defconfig hard-patched."
+else
+    log "⚠️ Warning: gki_defconfig not found at $DEFCONFIG_PATH"
 fi
 
 # ------------------------------------------------------------------------------
