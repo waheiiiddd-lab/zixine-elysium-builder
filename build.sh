@@ -185,27 +185,33 @@ rm inject.sh
 
 cd "$WORKDIR" || exit
 
-# [4.9] Critical Bootloop Fixes (GKI 5.10 / Xiaomi / Symbol Compatibility)
+# [4.9] Universal Compatibility Engine
 if [ "$KVER" == "5.10" ]; then
-  log "🩹 Patching module.c & drm_helper for device compatibility..."
-  
-  # Bypass "disagrees about version of symbol"
-  sed -i '/pr_warn.*disagrees about version of symbol.*/,+1 s/.*/return 1;/' kernel/module.c
-  
-  # Remove validasi clones pada DRM (Fix display Xiaomi)
-  # Menggunakan pemisah | agar lebih aman jika ada karakter khusus
-  sed -i '|^static int drm_atomic_check_valid_clones|,|^}|d' drivers/gpu/drm/drm_atomic_helper.c
-  sed -i '|ret = drm_atomic_check_valid_clones|,|return ret;|d' drivers/gpu/drm/drm_atomic_helper.c
+  log "🛡️ Ensuring Universal GKI Compliance..."
 
-  log "📉 Disabling strict versioning and stack protection in defconfig..."
-  # Karena Kconfig sudah mendukung "bool", kita bisa langsung set di defconfig
-  sed -i '/CONFIG_STACKPROTECTOR_PER_TASK/d' arch/arm64/configs/gki_defconfig
+  # 1. Matikan Stack Protector Per-Task (Penyebab utama bootloop di chipset Unisoc/MTK)
+  # Di Kconfigmu sudah 'bool', jadi cukup hapus paksa dari defconfig
+  sed -i '/CONFIG_STACKPROTECTOR_PER_TASK/d' arch/arm64/configs/gki_defconfig || true
   echo "# CONFIG_STACKPROTECTOR_PER_TASK is not set" >> arch/arm64/configs/gki_defconfig
-  
-  sed -i '/CONFIG_MODVERSIONS/d' arch/arm64/configs/gki_defconfig
+
+  # 2. Matikan MODVERSIONS
+  # Ini agar kernel mau menerima modul vendor meskipun CRC-nya sedikit berbeda
+  sed -i '/CONFIG_MODVERSIONS/d' arch/arm64/configs/gki_defconfig || true
   echo "# CONFIG_MODVERSIONS is not set" >> arch/arm64/configs/gki_defconfig
-  
-  log "✅ Bootloop fixes applied successfully."
+
+  # 3. Force 4KB Page Size (Wajib untuk Universalitas)
+  # Banyak perangkat budget (seperti Itel) tidak mendukung 16KB/64KB
+  sed -i '/CONFIG_ARM64_4K_PAGES/d' arch/arm64/configs/gki_defconfig || true
+  echo "CONFIG_ARM64_4K_PAGES=y" >> arch/arm64/configs/gki_defconfig
+
+  # 4. Bypass Symbol Versioning (Jaring Pengaman Driver Vendor)
+  sed -i 's/pr_warn.*disagrees about version of symbol.*/return 1; \/\/ universal_bypass/g' kernel/module.c || true
+
+  # 5. Fix Display untuk Perangkat Xiaomi/Budget
+  sed -i '/static int drm_atomic_check_valid_clones/,/}/d' drivers/gpu/drm/drm_atomic_helper.c || true
+  sed -i '/ret = drm_atomic_check_valid_clones/,/return ret;/d' drivers/gpu/drm/drm_atomic_helper.c || true
+
+  log "✅ Universal patches applied."
 fi
 
 # ------------------------------------------------------------------------------
