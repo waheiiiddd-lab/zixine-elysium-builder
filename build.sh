@@ -10,7 +10,7 @@
 # ------------------------------------------------------------------------------
 KERNEL_NAME="zixine-elysium-inline"
 USER="zixine"
-HOST="elysium"
+HOST="inline"
 TIMEZONE="Asia/Jakarta"
 WORKDIR="$(pwd)"
 
