@@ -2,7 +2,7 @@
 /*
  * Zixine Velocity v1.0 - The Smart Hybrid
  * Full Implementation: Velocity Tracking, I/O Boost, & Adaptive Sampling
- * Author: Partner Coding & You
+ * Author: zixine
  */
 
 #include <linux/cpufreq.h>
