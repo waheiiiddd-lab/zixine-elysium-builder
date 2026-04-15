@@ -29,7 +29,7 @@ case "$KVER" in
   "5.10")
     RELEASE="v0.3"
     KERNEL_REPO="https://github.com/ESK-Project/android12-5.10-gki/tree/v1.4.git"
-    KERNEL_BRANCH="v1.4"
+    KERNEL_BRANCH="main"
     ;;
   "6.1")
     RELEASE="v0.1"
