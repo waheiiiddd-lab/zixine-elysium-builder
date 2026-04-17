@@ -91,11 +91,11 @@ if [ "$KVER" == "5.10" ]; then
 fi
 
 # [4.2] Driver Adreno SkiaVK (GKI 5.10)
-if [ "$KVER" == "5.10" ]; then
-  log "🎮 Injecting Adreno SkiaVK library..."
-  mkdir -p "$WORKDIR/vendor/lib64"
-  curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/6.x/system/vendor/lib64/libgsl.so" -o "$WORKDIR/vendor/lib64/libgsl.so"
-fi
+#if [ "$KVER" == "5.10" ]; then
+#  log "🎮 Injecting Adreno SkiaVK library..."
+#  mkdir -p "$WORKDIR/vendor/lib64"
+#  curl -LSs "https://raw.githubusercontent.com/Kingfinik98/build-vortex/6.x/system/vendor/lib64/libgsl.so" -o "$WORKDIR/vendor/lib64/libgsl.so"
+#fi
 
 # [4.3] Cpuset Optimizer (GKI 5.10)
 # ⚠️ DEBUGGING: DIMATIKAN SEMENTARA KARENA DIDUGA MENYEBABKAN APP FREEZE
@@ -108,17 +108,17 @@ fi
 # fi
 
 # [4.4] GPU Tuning Injection (Universal)
-log "⚡ Injecting GPU Performance Tuning..."
-mkdir -p "$KSRC/drivers/misc"
-cp "$KERNEL_PATCHES/vortex_gki.c" "$KSRC/drivers/misc/vortex_gki.c" 2>/dev/null || log "Warning: GPU tuning file not found locally."
-if [ -f "$KSRC/drivers/misc/vortex_gki.c" ]; then
-  sed -i '/vortex_gki/d' "$KSRC/drivers/misc/Makefile"
-  echo "obj-y += vortex_gki.o" >> "$KSRC/drivers/misc/Makefile"
-fi
+#log "⚡ Injecting GPU Performance Tuning..."
+#mkdir -p "$KSRC/drivers/misc"
+#cp "$KERNEL_PATCHES/vortex_gki.c" "$KSRC/drivers/misc/vortex_gki.c" 2>/dev/null || log "Warning: GPU tuning file not found locally."
+#if [ -f "$KSRC/drivers/misc/vortex_gki.c" ]; then
+#  sed -i '/vortex_gki/d' "$KSRC/drivers/misc/Makefile"
+#  echo "obj-y += vortex_gki.o" >> "$KSRC/drivers/misc/Makefile"
+#fi
 
-# --- INJECT VORTEXCORE GOVERNOR (GKI 5.10, 6.1, 6.6) ---
+# --- INJECT Zixine Velocity GOVERNOR (GKI 5.10, 6.1, 6.6) ---
 if [ "$KVER" == "5.10" ] || [ "$KVER" == "6.1" ] || [ "$KVER" == "6.6" ]; then
-  log "Injecting Zixine Unified Governor (Velocity, Overdrive, EcoPulse)..."
+  log "Injecting Zixine Unified Governor (Velocity)..."
   
   # 1. Copy source file ke kernel tree
   cp "$WORKDIR/governor_zixine.c" "$KSRC/drivers/cpufreq/governor_zixine.c"
@@ -141,8 +141,6 @@ config CPU_FREQ_GOV_ZIXINE
     help
       Zixine Governor Suite:
       - Velocity: Smart Hybrid with Load Velocity tracking.
-      - Overdrive: Performance focused with 60% dynamic floor.
-      - EcoPulse: Battery saver with rapid fall logic.
 
       If in doubt, say N.
 KCONF_EOF
@@ -153,10 +151,10 @@ KCONF_EOF
 fi
 
 # [4.5] Display Refresh Rate Patch (300Hz)
-log "📺 Applying display refresh rate patch..."
-wget -qO Inject_300hz.sh https://raw.githubusercontent.com/Kingfinik98/build-vortex/refs/heads/6.x/inject_ksu/Inject_300hz.sh
-bash Inject_300hz.sh
-rm Inject_300hz.sh
+#log "📺 Applying display refresh rate patch..."
+#wget -qO Inject_300hz.sh https://raw.githubusercontent.com/Kingfinik98/build-vortex/refs/heads/6.x/inject_ksu/Inject_300hz.sh
+#bash Inject_300hz.sh
+#rm Inject_300hz.sh
 
 # [4.6] WiFi SM8650 & BTQCA Fixes (GKI 6.1)
 if [ "$KVER" == "6.1" ]; then
@@ -228,10 +226,6 @@ if [ -f "$DEFCONFIG_PATH" ]; then
     # Menjaga Status Enforcing untuk Play Integrity (App Bank Aman)
     safe_inject "CONFIG_SECURITY_SELINUX" "CONFIG_SECURITY_SELINUX=y"
     safe_inject "CONFIG_SECURITY_SELINUX_DEVELOP" "# CONFIG_SECURITY_SELINUX_DEVELOP is not set"
-    
-    # Menonaktifkan DM-Verity agar tidak 'Device Corrupted'
-    safe_inject "CONFIG_DM_VERITY" "# CONFIG_DM_VERITY is not set"
-    safe_inject "CONFIG_DM_VERITY_FEC" "# CONFIG_DM_VERITY_FEC is not set"
 
     # Stabilitas Page Size
     safe_inject "CONFIG_ARM64_4K_PAGES" "CONFIG_ARM64_4K_PAGES=y"
@@ -322,8 +316,7 @@ elif [ "$KSU" == "vortexsu" ]; then
     patch -p1 < 50_add_susfs_in_${SUSFS_BRANCH}.patch || true
     
     log "Applying Anti-Panic patch for ida_free in namespace.c..."
-    sed -i 's/WARN_ON_ONCE(1);///WARN_ON_ONCE(1);/g' lib/idr.c 2>/dev/null || true
-    
+    sed -i 's/WARN_ON_ONCE(1);///WARN_ON_ONCE(1);/g' lib/idr.c 2>/dev/null || true  
     SUSFS_VERSION=$(grep -E '^#define SUSFS_VERSION' ./include/linux/susfs.h | cut -d' ' -f3 | sed 's/"//g')
     config --disable CONFIG_KPM
     config --enable CONFIG_KSU_MULTI_MANAGER_SUPPORT
