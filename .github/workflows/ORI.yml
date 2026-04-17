@@ -1,0 +1,64 @@
+name: Zixine Kernel Builder - Vortex
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - vortex-basse
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lingkungan Kerja (Environment Setup)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc bison build-essential flex git-core gnupg gperf libsdl1.2-dev libesd0-dev libwxgtk3.0-gtk3-dev squashfs-tools build-essential zip curl libncurses5-dev zlib1g-dev libncurses5 libssl-dev gcc-multilib g++-multilib x11proto-core-dev libx11-dev libgl1-mesa-dev libxml2-utils xsltproc unzip device-tree-compiler python3 python-is-python3
+
+      - name: Ambil Toolchain (Clang & GCC)
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/toolchain
+          cd $GITHUB_WORKSPACE/toolchain
+          curl -LO https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r522817.tar.gz
+          tar -xf clang-r522817.tar.gz
+          git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9.git --depth=1 gcc64
+          git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9.git --depth=1 gcc32
+
+      - name: Ambil Source Kernel
+        run: |
+          git clone --depth=1 -b vortex-basse https://github.com/Kingfinik98/kernel-common-android12-5.10.git kernel-source
+
+      - name: Integrasi KernelSU Next
+        run: |
+          cd kernel-source
+          curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -s next
+          echo "CONFIG_KSU=y" >> arch/arm64/configs/vortex_defconfig
+          echo "CONFIG_KSU_NEXT=y" >> arch/arm64/configs/vortex_defconfig
+
+      - name: Proses Kompilasi (Build)
+        run: |
+          cd kernel-source
+          export PATH=$GITHUB_WORKSPACE/toolchain/bin:$GITHUB_WORKSPACE/toolchain/gcc64/bin:$GITHUB_WORKSPACE/toolchain/gcc32/bin:$PATH
+          export ARCH=arm64
+          export SUBARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-android-
+          export CROSS_COMPILE_ARM32=arm-linux-androideabi-
+          
+          make O=out vortex_defconfig
+          make -j$(nproc --all) O=out \
+                      CC=clang \
+                      CLANG_TRIPLE=aarch64-linux-gnu- \
+                      LD=ld.lld \
+                      AR=llvm-ar \
+                      NM=llvm-nm \
+                      OBJCOPY=llvm-objcopy \
+                      OBJDUMP=llvm-objdump \
+                      STRIP=llvm-strip
+
+      - name: Unggah Hasil Build (Artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Zixine-Kernel-Vortex
+          path: |
+            kernel-source/out/arch/arm64/boot/Image
+            kernel-source/out/arch/arm64/boot/dtbo.img
+            
