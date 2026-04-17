@@ -28,8 +28,8 @@ CLANG_BRANCH=""
 case "$KVER" in
   "5.10")
     RELEASE="v0.3"
-    KERNEL_REPO="https://github.com/Steambot12/Templar-Kernel-GKI-5.10.git"
-    KERNEL_BRANCH="GoogleLTS-Staging"
+    KERNEL_REPO="https://github.com/Kingfinik98/kernel-common-android12-5.10.git"
+    KERNEL_BRANCH="vortex-basse"
     ;;
   "6.1")
     RELEASE="v0.1"
