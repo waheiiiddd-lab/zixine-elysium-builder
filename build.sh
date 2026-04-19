@@ -34,9 +34,9 @@ setup_env_vars() {
             ;;
         "5.10")
             RELEASE="v0.3"
-            KERNEL_REPO="https://github.com/Kingfinik98/kernel-common-android12-5.10.git"
-            KERNEL_BRANCH="vortex-basse"
-            ANYKERNEL_BRANCH="master"
+            KERNEL_REPO="https://github.com/ramabondanp/android_kernel_common-5.10.git"
+            KERNEL_BRANCH="android12-5.10"
+            ANYKERNEL_BRANCH="main"
             ;;
     esac
     KERNEL_DEFCONFIG="gki_defconfig"
